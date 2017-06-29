@@ -29,6 +29,20 @@ def main():
 		# print('--Finished: %.2f sec.' % (time.time() - starttime))
 	dt_result = skfmm.distance(bimg, dx=5e-2)
 		# print('--Finished: %.2f sec.' % (time.time() - starttime))
+	print(np.max(dt_result))
+
+	# try:
+	# 	os.remove('dt2.tif')
+	# except OSError:
+	# 	pass
+
+	# tiff = TIFF.open('dt2.tif', mode='w')
+	# block = np.flipud(dt_result.astype(img.dtype))
+    
+	# for z in range(block.shape[2]):
+	# 	tiff.write_image(block[:,:,z], compression=None)
+	# tiff.close()
+
 
 		# find seed location (maximum intensity node)
 	max_dt = np.max(dt_result)
@@ -43,35 +57,6 @@ def main():
 	marchmap = np.ones(bimg.shape)
 	marchmap[seed_location[0]][seed_location[1]][seed_location[2]] = -1
 	timemap = skfmm.travel_time(marchmap, speed, dx=5e-3)
-
-	# plotidx = 1
-	# plt.subplot(4, 4, plotidx)
-	# plt.imshow(timemap.max(axis=0))
-	# plt.title('1')
-	# plotidx += 1
-
-	# plotidx = 1
-	# plt.subplot(4, 4, plotidx)
-	# plt.imshow(timemap.max(axis=1))
-	# plt.title('2')
-	# plotidx += 1
-
-	# plotidx = 1
-	# plt.subplot(4, 4, plotidx)
-	# plt.imshow(timemap.max(axis=2))
-	# plt.title('3')
-	# plotidx += 1
-
-	# plotidx = 1
-	# plt.subplot(4, 4, plotidx)
-	# plt.imshow(timemap.max(axis=2))
-	# plt.title('4')
-	# plotidx += 1
-	# plt.colorbar(timemap)
-
-	# fig, ax = plt.subplots()
-	# tm = ax.imshow(timemap.max(axis=2))
-	# plt.colorbar(tm)
 
 	fig, ax = plt.subplots()
 	tm = ax.imshow(timemap.max(axis=2))

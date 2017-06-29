@@ -3,6 +3,7 @@ from io import *
 import matplotlib.pyplot as plt
 from scipy import io as sio
 import os
+import argparse
 
 try:
     from skimage import filters
@@ -13,8 +14,12 @@ from scipy.ndimage.filters import gaussian_filter
 # mat = sio.loadmat('tests/data/very-small-oof.mat', )
 # img = mat['img']
 def main():
+	parser = argparse.ArgumentParser(description='Arguments for app2_py.')
+	parser.add_argument('--file', type=str, default=None, required=True, help='The path of input file')
+	args = parser.parse_args()
+
 	from libtiff import TIFFfile, TIFF
-	tiff = TIFF.open('2.tif', mode='r')
+	tiff = TIFF.open(args.file, mode='r')
 	stack = []
 	for sample in tiff.iter_images():
 	    stack.append(np.flipud(sample))
@@ -41,54 +46,54 @@ def main():
 	rps *= (255/np.max(rps))
 	rps = np.ceil(rps).astype(img.dtype)
 	print(np.max(rps),np.min(rps),rps.shape)
-	writetiff3d('rsp_2.tif',rps)
+	writetiff3d('rsp_'+args.file+'tif',rps)
 
 	smoothed_rps = gaussian_filter(rps, 0.5)
 	# smoothed_rps[np.argwhere(smoothed_rps>12)] += 50
-	writetiff3d('smoothed_rps_1.tif',smoothed_rps)
+	# writetiff3d('smoothed_rps_42.tif',smoothed_rps)
 # ostu_smooth = filters.threshold_otsu(smoothed_rps)
 	ostu_smooth = 1
 
-	plotidx = 1
-	plt.subplot(4, 4, plotidx)
-	plt.imshow(rps.max(axis=0))
-	plt.title('OOF Python MEM_SAVE YZ')
-	plotidx += 1
+	# plotidx = 1
+	# plt.subplot(4, 4, plotidx)
+	# plt.imshow(rps.max(axis=0))
+	# plt.title('OOF Python MEM_SAVE YZ')
+	# plotidx += 1
 
-	plt.subplot(4, 4, plotidx)
-	plt.imshow(rps.max(axis=1))
-	plt.title('OOF Python MEM_SAVE XZ')
-	plotidx += 1
+	# plt.subplot(4, 4, plotidx)
+	# plt.imshow(rps.max(axis=1))
+	# plt.title('OOF Python MEM_SAVE XZ')
+	# plotidx += 1
 	
-	plt.subplot(4, 4, plotidx)
-	plt.imshow(rps.max(axis=2))
-	plt.title('OOF Python MEM_SAVE XY')
-	plotidx += 1
+	# plt.subplot(4, 4, plotidx)
+	# plt.imshow(rps.max(axis=2))
+	# plt.title('OOF Python MEM_SAVE XY')
+	# plotidx += 1
 
-	plt.subplot(4, 4, plotidx)
-	plt.imshow((rps > thr).max(axis=2))
-	plt.title('OOF Python MEM_SAVE Otsu XY')
-	plotidx += 1
+	# plt.subplot(4, 4, plotidx)
+	# plt.imshow((rps > thr).max(axis=2))
+	# plt.title('OOF Python MEM_SAVE Otsu XY')
+	# plotidx += 1
 
-	plt.subplot(4, 4, plotidx)
-	plt.imshow(smoothed_rps.max(axis=0))
-	plt.title('Smooth YZ')
-	plotidx += 1
+	# plt.subplot(4, 4, plotidx)
+	# plt.imshow(smoothed_rps.max(axis=0))
+	# plt.title('Smooth YZ')
+	# plotidx += 1
 
-	plt.subplot(4, 4, plotidx)
-	plt.imshow(smoothed_rps.max(axis=1))
-	plt.title('Smooth XZ')
-	plotidx += 1
+	# plt.subplot(4, 4, plotidx)
+	# plt.imshow(smoothed_rps.max(axis=1))
+	# plt.title('Smooth XZ')
+	# plotidx += 1
 
-	plt.subplot(4, 4, plotidx)
-	plt.imshow(smoothed_rps.max(axis=2))
-	plt.title('Smooth XY')
-	plotidx += 1
+	# plt.subplot(4, 4, plotidx)
+	# plt.imshow(smoothed_rps.max(axis=2))
+	# plt.title('Smooth XY')
+	# plotidx += 1
 
-	plt.subplot(4, 4, plotidx)
-	plt.imshow((smoothed_rps > ostu_smooth).max(axis=2))
-	plt.title('Smooth XY')
-	plotidx +=1
+	# plt.subplot(4, 4, plotidx)
+	# plt.imshow((smoothed_rps > ostu_smooth).max(axis=2))
+	# plt.title('Smooth XY')
+	# plotidx +=1
 
 	# plt.subplot(4, 4, plotidx)
 	# plt.imshow(canny.max(axis=0))
@@ -110,25 +115,25 @@ def main():
 	# plt.title('OOF Matlab Otsu XY')
 	# plotidx += 1
 
-	plt.subplot(4, 4, plotidx)
-	plt.imshow(img.max(axis=0))
-	plt.title('Original YZ')
-	plotidx += 1
+	# plt.subplot(4, 4, plotidx)
+	# plt.imshow(img.max(axis=0))
+	# plt.title('Original YZ')
+	# plotidx += 1
 
-	plt.subplot(4, 4, plotidx)
-	plt.imshow(img.max(axis=1))
-	plt.title('Original XZ')
-	plotidx += 1
+	# plt.subplot(4, 4, plotidx)
+	# plt.imshow(img.max(axis=1))
+	# plt.title('Original XZ')
+	# plotidx += 1
 
-	plt.subplot(4, 4, plotidx)
-	plt.imshow(img.max(axis=2))
-	plt.title('Original XY')
-	plotidx += 1
+	# plt.subplot(4, 4, plotidx)
+	# plt.imshow(img.max(axis=2))
+	# plt.title('Original XY')
+	# plotidx += 1
 
-	plt.subplot(4, 4, plotidx)
-	plt.imshow((img > ostu_img).max(axis=2))
-	plt.title('Original Otsu XY')
-	plt.show()
+	# plt.subplot(4, 4, plotidx)
+	# plt.imshow((img > ostu_img).max(axis=2))
+	# plt.title('Original Otsu XY')
+	# plt.show()
 
 
 def loadimg(file):

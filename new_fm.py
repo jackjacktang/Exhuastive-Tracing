@@ -55,7 +55,7 @@ def GI(w,h,d, img, max_intensity, min_intensity):
 initial tree reconsturction using fast-marching
 
 """
-def fastmarching(img, bimg, dt_result, timemap, size, seed_w, seed_h, seed_d, max_intensity,threshold,out_path,reinforce):
+def fastmarching(img, bimg, dt_result, timemap, size, seed_w, seed_h, seed_d, max_intensity,threshold,out_path,r_iter,coverage_ratio):
 
     # starttime = time.time()
     # state 0 for FAR, state 1 for TRAIL, state 2 for ALIVE
@@ -195,14 +195,14 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed_w, seed_h, seed_d, ma
 
     print('alive size:',alive_set.shape)
     bb = np.zeros(img.shape) 
-    hp_result,bb = hp(img,bimg,size,alive_set,out_path,threshold,bb,1,bimg)
+    hp_result,bb = hp(img,bimg,size,alive_set,out_path,threshold,bb,1,bimg,coverage_ratio)
     # print(hp_result[:,5])
     result = hp_result
     print(result.shape)
     # saveswc(out_path + 'new_fm_ini_test_bong.swc',result) 
     # return
 
-    if (reinforce == 0):
+    if r_iter == 0:
         swc_x = result[:, 2].copy()
         swc_y = result[:, 3].copy()
         result[:, 2] = swc_y
@@ -210,24 +210,26 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed_w, seed_h, seed_d, ma
         # print(type(alive_set))
         # print(alive_set[27])
         # saveswc(out_path + 'new_fm_ini_test.swc',alive_set)
-        saveswc(out_path + '_result.swc',result)
-        return
+        saveswc(out_path + str(r_iter) + 'result.swc',result)
 
     # reinforce fast marching
-    far = np.argwhere(tbimg == 1)
-    no_iteration = 0
-    # current_index += 1
-    far_timemap = np.array([[]])
-    for f in far:
-        if far_timemap.shape[1] == 0:
-            far_timemap = np.asarray([[f[0],f[1],f[2],timemap[f[0]][f[1]][f[2]]]])
-        else:
-            far_timemap = np.vstack((far_timemap,[f[0],f[1],f[2],timemap[f[0]][f[1]][f[2]]]))
-    sort_timemap = far_timemap[np.argsort(far_timemap[:,3])]
-    sort_timemap = sort_timemap[::-1]
+    nbimg = (img > 2).astype('int')
+    far = np.argwhere(nbimg == 1)
+    if far.shape[0] != 0:
+        no_iteration = 0
+        # current_index += 1
+        far_timemap = np.array([[]])
+        for f in far:
+            # if (bimg[f[0]][f[1]][f[2]]] == 1):
+            if far_timemap.shape[1] == 0:
+                far_timemap = np.asarray([[f[0],f[1],f[2],timemap[f[0]][f[1]][f[2]]]])
+            else:
+                far_timemap = np.vstack((far_timemap,[f[0],f[1],f[2],timemap[f[0]][f[1]][f[2]]]))
+        sort_timemap = far_timemap[np.argsort(far_timemap[:,3])]
+        sort_timemap = sort_timemap[::-1]
 
-    alive_loc = alive_set[2:5]
-    # alive_loc = alive_set[2]*alive_set[3]*alive_set[4]
+        alive_loc = alive_set[2:5]
+        # alive_loc = alive_set[2]*alive_set[3]*alive_set[4]
 
         
     while (far.size > 0 and sort_timemap.size > 0):
@@ -257,6 +259,19 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed_w, seed_h, seed_d, ma
 
 
         no_iteration+=1
+        # if (no_iteration == 5 or no_iteration == 10 or no_iteration == 20 or no_iteration == 50 or no_iteration == 100 or no_iteration == 200 or no_iteration == 500 or no_iteration == 1000 or no_iteration == 2000):
+        #     temp_result = result.copy()
+        #     swc_x = temp_result[:, 2].copy()
+        #     swc_y = temp_result[:, 3].copy()
+        #     temp_result[:, 2] = swc_y
+        #     temp_result[:, 3] = swc_x
+        #     # print(type(alive_set))
+        #     # print(alive_set[27])
+        #     # saveswc(out_path + 'new_fm_ini_test.swc',alive_set)
+        #     saveswc(out_path + str(no_iteration) + 'result.swc',temp_result)
+
+        if(no_iteration >= r_iter):
+            break
 
         minx = int(np.minimum(min_loc[0],furthest_loc[0]))
         maxx = int(np.maximum(min_loc[0],furthest_loc[0]))
@@ -279,7 +294,9 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed_w, seed_h, seed_d, ma
         # filtered_region = np.ceil(filtered_region).astype(img.dtype)
 
         
-        img[minx:maxx+1, miny:maxy+1, minz:maxz+1] = rsp[minx:maxx+1, miny:maxy+1, minz:maxz+1]
+        # img[minx:maxx+1, miny:maxy+1, minz:maxz+1] = rsp[minx:maxx+1, miny:maxy+1, minz:maxz+1]
+
+        # img[minx:maxx+1, miny:maxy+1, minz:maxz+1] = img[minx:maxx+1, miny:maxy+1, minz:maxz+1]
         
         # img[minx:maxx+1, miny:maxy+1, minz:maxz+1] += 10
         # print(minx,maxx,miny,maxy,minz,maxz)
@@ -368,7 +385,9 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed_w, seed_h, seed_d, ma
                         if offset == 2:
                             factor = 1.414214
 
-                        if (rsp[w][h][d] <= threshold):
+                        # if (rsp[w][h][d] <= threshold):
+                        #     continue
+                        if (img[w][h][d] <= threshold):
                             continue
 
                     # spatial_index = spatial(w, h, d)
@@ -426,10 +445,10 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed_w, seed_h, seed_d, ma
         # p_ind = np.argwhere(new_alive[:,6] == 0)
         # p_ind = p_ind[0][0]
         # new_alive[p_ind][6] = -1
-        print('p_ind',p_ind.shape)
+        # print('p_ind',p_ind.shape)
 
         print('before prune',new_alive.shape)
-        hp_result,bb = hp(img,bimg,size,new_alive,out_path,threshold,bb,2,brsp)
+        hp_result,bb = hp(img,bimg,size,new_alive,out_path,threshold,bb,2,brsp,coverage_ratio)
         if hp_result is None:
             print('after prune: Nothing')
         else:
@@ -439,6 +458,9 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed_w, seed_h, seed_d, ma
         if(hp_result is None or hp_result.shape[1] == 0):
             continue
 
+        # if(hp_result.shape[0] <= 50):
+        #     continue
+
         print('padding index', padding_index)
         # print('after prune',hp_result.shape)
         # print(hp_result)
@@ -447,8 +469,6 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed_w, seed_h, seed_d, ma
         hp_result[:,5] = 1
         result = np.vstack((result,hp_result))
         far = np.argwhere(tbimg == 1)
-        if(no_iteration >= 19):
-            break
         
 
     # swc_x = new_alive[:, 2].copy()
@@ -477,7 +497,7 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed_w, seed_h, seed_d, ma
     result[:, 3] = swc_x
     # print(type(alive_set))
     # print(alive_set[27])
-    # saveswc(out_path + 'new_fm_ini_test.swc',alive_set)
+    saveswc(out_path + '_ini.swc',alive_set)
     saveswc(out_path + '_result.swc',result)
     # print('--Start: %.2f sec.' % (starttime))
     print('--Store ini_swc: %.2f sec.' % (time.time() - starttime))
