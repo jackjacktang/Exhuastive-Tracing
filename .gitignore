@@ -2,3 +2,5 @@ test/*
 timemap/*.tif
 filter_test/*.tif
 accuracy/*.tif
+*.tif
+*.swc
