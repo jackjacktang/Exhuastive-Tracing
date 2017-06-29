@@ -4,3 +4,4 @@ filter_test/*.tif
 accuracy/*.tif
 *.tif
 *.swc
+*.pyc
