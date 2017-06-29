@@ -14,9 +14,10 @@ def main():
 	parser = argparse.ArgumentParser(description='Arguments for app2_py.')
 	parser.add_argument('--file', type=str, default=None, required=True, help='The path of input file')
 	parser.add_argument('--out', type=str, default=None, required=True, help='The out path of output swc')
-	parser.add_argument('--threshold', type=float, default=-1, help='threshold to distinguish the foreground and background; works on filtered image if --filter is enabled')
+	parser.add_argument('--threshold', type=float, default=0, help='threshold to distinguish the foreground and background; works on filtered image if --filter is enabled')
 	parser.add_argument('--soma_threshold', type=float, default=-1, help='The threshold on the original image to get soma radius')
-    
+	parser.add_argument('--coverage_ratio', type=float, default=0.9, help='Coverage ratio used for hierarchical pruning.')
+
 	# Argument for tracing
 	parser.add_argument('--allow_gap', dest='allow_gap', action='store_true', help='allow gap during tracing')
 	parser.add_argument('--no-allow_gap', dest='allow_gap', action='store_false', help='allow no gap during tracing')
@@ -30,9 +31,8 @@ def main():
 	parser.add_argument('--no-dt', dest='trace', action='store_false', help='Skip dt')
 	parser.set_defaults(dt=True)
 
-	parser.add_argument('--rein', dest='rein', action='store_true', help='allow reinforcement fast marching')
-	parser.add_argument('--no-rein', dest='rein', action='store_false', help='Skip reinfocement fast marching')
-	parser.set_defaults(rein=False)
+	# reinforcement iteraion
+	parser.add_argument('--iter', type=int, default=0, help='Reinforcement iteration')
 	# MISC
 	parser.add_argument('--silence', dest='silence', action='store_true')
 	parser.add_argument('--no-silence', dest='silence', action='store_false')
@@ -66,23 +66,22 @@ def main():
 		print('--seed index',max_dt,max_intensity,seed_location[0],seed_location[1],seed_location[2])
 
 		# dt_result = skfmm.distance(np.logical_not(dt_result), dx=5e-3)
-		dt_result[dt_result > 0.04] = 0.04
-		# dt_result = max_dt-dt_result
-		speed = makespeed(dt_result)
-		marchmap = np.ones(bimg.shape)
-		marchmap[seed_location[0]][seed_location[1]][seed_location[2]] = -1
-		timemap = skfmm.travel_time(marchmap, speed, dx=5e-3)
-		# print('timemap shape',timemap.shape)
-		imgxy2d = timemap.min(axis=-1)
+		timemap = []
+		if args.iter != 0:
+			dt_result[dt_result > 0.04] = 0.04
+			# dt_result = max_dt-dt_result
+			speed = makespeed(dt_result)
+			marchmap = np.ones(bimg.shape)
+			marchmap[seed_location[0]][seed_location[1]][seed_location[2]] = -1
+			timemap = skfmm.travel_time(marchmap, speed, dx=5e-3)
+			# print('timemap shape',timemap.shape)
+			imgxy2d = timemap.min(axis=-1)
 
-		scipy.misc.imsave('imgxy2d_projection.tif', imgxy2d)
-		# marchmap = np.ones(size)
-		# marchmap[seed_location[0]][seed_location[1]][seed_location[2]] = -1
-		# t = skfmm.travel_time(marchmap,makespeed(dt_result),dx=5e-3)
+			# scipy.misc.imsave('imgxy2d_projection.tif', imgxy2d)
 
 		print('--SKFMM: %.2f sec.' % (time.time() - starttime))
 		print('--initial reconstruction by Fast Marching')
-		alive = fastmarching(img,bimg,dt_result,timemap,size,seed_location[0],seed_location[1],seed_location[2],max_intensity,args.threshold,args.out,args.rein)
+		alive = fastmarching(img,bimg,dt_result,timemap,size,seed_location[0],seed_location[1],seed_location[2],max_intensity,args.threshold,args.out,args.iter,args.coverage_ratio)
 		print('--initial reconstruction finished')
 		print('--FM Total: %.2f sec.' % (time.time() - starttime))
 

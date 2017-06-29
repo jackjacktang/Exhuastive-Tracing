@@ -7,7 +7,7 @@ from random import randint
 """
 hierarchical pruning based on the initial tree reconstrucionn by fast marching
 """
-def hp(img,bimg,size,alive,out,threshold,bb,phase,rsp):
+def hp(img,bimg,size,alive,out,threshold,bb,phase,rsp,coverage_ratio):
 
     # alive = loadswc('test/2000-1/new_fm_ini.swc')
     filter_segs = swc2topo_segs(img,size,alive,out,threshold,phase)
@@ -35,7 +35,7 @@ def hp(img,bimg,size,alive,out,threshold,bb,phase,rsp):
 
 
     print('--Hierarchical Pruning')
-    result_segs,bb = hierchical_coverage_prune(alive,filter_segs,img,out,bb,phase)
+    result_segs,bb = hierchical_coverage_prune(alive,filter_segs,img,out,bb,phase,coverage_ratio)
     return result_segs,bb
 
 """
@@ -166,16 +166,15 @@ def swc2topo_segs(img,size,alive,out,threshold,phase):
 hierchical coverage pruning based on the segment reconstruction.
 segments with coverage ratio less than threshold will be pruned
 """
-def hierchical_coverage_prune(alive,filter_segs,img,out,bb,phase):
+def hierchical_coverage_prune(alive,filter_segs,img,out,bb,phase,coverage_ratio):
     bb = np.zeros(img.shape)
     sort_segs = filter_segs[np.argsort(filter_segs[:,3])]
     sort_segs = sort_segs[::-1]
     print(sort_segs[0:20,3])
     print('sort_seg',sort_segs[0][3],sort_segs[-1][3])
     result_segs = np.array([[]])
-    coverage_ratio = 9/10
-    if phase == 2:
-        coverage_ratio = 7/10
+    # if phase == 2:
+    #     coverage_ratio = 7/10
         # return sort_segs[0:10],bb
 
     # if phase == 2:
@@ -258,16 +257,16 @@ def hierchical_coverage_prune(alive,filter_segs,img,out,bb,phase):
         # index+=1
 
     # delete leaf segments which the parent have already been deleted
-    parent_index = result_segs[:, 6]
-    delete_index = []
-    index = 0
-    for p in parent_index:
-        if p not in result_segs[:, 0]:
-            delete_index.append(index)
-        index+=1
-    print(result_segs.shape)
-    result_segs = np.delete(result_segs,delete_index,axis=0)
-    print(result_segs.shape)
+    # parent_index = result_segs[:, 6]
+    # delete_index = []
+    # index = 0
+    # for p in parent_index:
+    #     if p not in result_segs[:, 0]:
+    #         delete_index.append(index)
+    #     index+=1
+    # print(result_segs.shape)
+    # result_segs = np.delete(result_segs,delete_index,axis=0)
+    # print(result_segs.shape)
 
 
 
