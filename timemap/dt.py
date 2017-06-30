@@ -33,17 +33,6 @@ def main():
 		# print('--Finished: %.2f sec.' % (time.time() - starttime))
 	print(np.max(dt_result))
 
-	# try:
-	# 	os.remove('dt4.tif')
-	# except OSError:
-	# 	pass
-
-	# tiff = TIFF.open('dt4.tif', mode='w')
-	# block = np.flipud(dt_result.astype(img.dtype))
-    
-	# for z in range(block.shape[2]):
-	# 	tiff.write_image(block[:,:,z], compression=None)
-	# tiff.close()
 
 	cdict = {
   	'red'  :  ( (0.0, 0.25, .25), (0.02, .59, .59), (1., 1., 1.)),
@@ -53,14 +42,26 @@ def main():
 
 	# cm = m.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
 
-	# for i in range(0,img.shape[0]):
-	# 	for j in range(0,img.shape[1]):
-	# 		for k in range(0,img.shape[2]):
-	# 			if(bimg[i][j][k] == 1):
+	for i in range(0,img.shape[0]):
+		for j in range(0,img.shape[1]):
+			for k in range(0,img.shape[2]):
+				if(bimg[i][j][k] == 1):
+					bimg[i][j][k] = 255
+					dt_result[i][j][k] *= 3
+					if dt_result[i][j][k] >= 400:
+						dt_result[i][j][k] /= 6
 
-	# 				dt_result[i][j][k] *= 3
-	# 				if dt_result[i][j][k] >= 400:
-	# 					dt_result[i][j][k] /= 6
+	try:
+		os.remove('binary.tif')
+	except OSError:
+		pass
+
+	tiff = TIFF.open('binary.tif', mode='w')
+	block = np.flipud(bimg.astype(img.dtype))
+    
+	for z in range(block.shape[2]):
+		tiff.write_image(block[:,:,z], compression=None)
+	tiff.close()
 
 	fig, ax = plt.subplots()
 	tm = ax.imshow(img.max(axis=2))

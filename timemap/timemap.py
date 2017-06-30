@@ -16,7 +16,7 @@ from scipy.ndimage.filters import gaussian_filter
 # img = mat['img']
 def main():
 	from libtiff import TIFFfile, TIFF
-	tiff = TIFF.open('2.tif', mode='r')
+	tiff = TIFF.open('1.tif', mode='r')
 	stack = []
 	for sample in tiff.iter_images():
 	    stack.append(np.flipud(sample))

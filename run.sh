@@ -53,7 +53,9 @@
 
 # python3 main.py --iter 5000 --file test/fly_39/39.tif --threshold 5 --out test/fly_39/39/iter_5000_1.swc
 
-python3 main.py --file test/mouse/1922.tif --threshold 6 --out test/mouse/result.swc
+# python3 main.py --file test/mouse/1922.tif --threshold 6 --out test/mouse/result.swc
+
+python3 main.py --iter 1 --file test/Frog/1/1.tif --threshold 22 --out test/Frog/1/testnew.swc
 
 
 # python3 main.py --iter 10000 --file test/Frog/1.tif --threshold 22 --out test/Frog/1/iter_15000.swc

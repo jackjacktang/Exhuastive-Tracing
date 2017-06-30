@@ -159,6 +159,7 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed_w, seed_h, seed_d, ma
                             img[i][j][k] <= threshold):
                         continue
 
+
                     # spatial_index = spatial(w, h, d)
                     if (state[w][h][d] != 2):
                         # min_intensity set as 0
@@ -194,27 +195,32 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed_w, seed_h, seed_d, ma
                                 prev[w][h][d] = prev_ind
 
     print('alive size:',alive_set.shape)
+    ini = alive_set.copy()
+    swc_x = ini[:, 2].copy()
+    swc_y = ini[:, 3].copy()
+    ini[:, 2] = swc_y
+    ini[:, 3] = swc_x
+    saveswc(out_path + 'ini.swc',ini) 
     bb = np.zeros(img.shape) 
     hp_result,bb = hp(img,bimg,size,alive_set,out_path,threshold,bb,1,bimg,coverage_ratio)
     # print(hp_result[:,5])
     result = hp_result
     print(result.shape)
-    # saveswc(out_path + 'new_fm_ini_test_bong.swc',result) 
     # return
 
     if r_iter == 0:
-        swc_x = result[:, 2].copy()
-        swc_y = result[:, 3].copy()
-        result[:, 2] = swc_y
-        result[:, 3] = swc_x
+        # swc_x = result[:, 2].copy()
+        # swc_y = result[:, 3].copy()
+        # result[:, 2] = swc_y
+        # result[:, 3] = swc_x
         # print(type(alive_set))
         # print(alive_set[27])
         # saveswc(out_path + 'new_fm_ini_test.swc',alive_set)
         saveswc(out_path + str(r_iter) + 'result.swc',result)
 
     # reinforce fast marching
-    nbimg = (img > 2).astype('int')
-    far = np.argwhere(nbimg == 1)
+    # nbimg = (img > 2).astype('int')
+    far = np.argwhere(bimg == 1)
     if far.shape[0] != 0:
         no_iteration = 0
         # current_index += 1
@@ -235,30 +241,30 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed_w, seed_h, seed_d, ma
     while (far.size > 0 and sort_timemap.size > 0):
         # alive_set = []
         padding_index = current_index
-        min_dist = np.inf
-        min_loc = []
-        furthest_loc = sort_timemap[0][0:3]
-        far_loc = furthest_loc[0]*furthest_loc[1]*furthest_loc[2]
-        sort_timemap = np.delete(sort_timemap, (0), axis=0)
-        # print(furthest_loc[0],furthest_loc[1],furthest_loc[2])
-        if tbimg[int(furthest_loc[0])][int(furthest_loc[1])][int(furthest_loc[2])] == 2:
-            continue
+        # min_dist = np.inf
+        # min_loc = []
+        # furthest_loc = sort_timemap[0][0:3]
+        # far_loc = furthest_loc[0]*furthest_loc[1]*furthest_loc[2]
+        # sort_timemap = np.delete(sort_timemap, (0), axis=0)
+        # # print(furthest_loc[0],furthest_loc[1],furthest_loc[2])
+        # if tbimg[int(furthest_loc[0])][int(furthest_loc[1])][int(furthest_loc[2])] == 2:
+        #     continue
 
-        for a in alive_set:
-            temp_dist = euclidean(furthest_loc,a[2:5])
-            if temp_dist < min_dist:
-                min_dist = temp_dist
-                min_loc = a[2:5]
+        # for a in alive_set:
+        #     temp_dist = euclidean(furthest_loc,a[2:5])
+        #     if temp_dist < min_dist:
+        #         min_dist = temp_dist
+        #         min_loc = a[2:5]
 
-        # min_idx = np.abs(alive_loc[0]*alive_loc[1]*alive_loc[2]-far_loc).argmin()
-        # print(min_idx.shape)
-        # min_loc = alive_set[min_idx]
-
-
-        print('min+furthest',min_loc,furthest_loc)
+        # # min_idx = np.abs(alive_loc[0]*alive_loc[1]*alive_loc[2]-far_loc).argmin()
+        # # print(min_idx.shape)
+        # # min_loc = alive_set[min_idx]
 
 
-        no_iteration+=1
+        # print('min+furthest',min_loc,furthest_loc)
+
+
+        # no_iteration+=1
         # if (no_iteration == 5 or no_iteration == 10 or no_iteration == 20 or no_iteration == 50 or no_iteration == 100 or no_iteration == 200 or no_iteration == 500 or no_iteration == 1000 or no_iteration == 2000):
         #     temp_result = result.copy()
         #     swc_x = temp_result[:, 2].copy()
@@ -273,18 +279,21 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed_w, seed_h, seed_d, ma
         if(no_iteration >= r_iter):
             break
 
-        minx = int(np.minimum(min_loc[0],furthest_loc[0]))
-        maxx = int(np.maximum(min_loc[0],furthest_loc[0]))
-        miny = int(np.minimum(min_loc[1],furthest_loc[1]))
-        maxy = int(np.maximum(min_loc[1],furthest_loc[1]))
-        minz = int(np.minimum(min_loc[2],furthest_loc[2]))
-        maxz = int(np.maximum(min_loc[2],furthest_loc[2]))
-        if (minx == maxx and miny == maxy and minz == maxz):
-            continue
+        # minx = int(np.minimum(min_loc[0],furthest_loc[0]))
+        # maxx = int(np.maximum(min_loc[0],furthest_loc[0]))
+        # miny = int(np.minimum(min_loc[1],furthest_loc[1]))
+        # maxy = int(np.maximum(min_loc[1],furthest_loc[1]))
+        # minz = int(np.minimum(min_loc[2],furthest_loc[2]))
+        # maxz = int(np.maximum(min_loc[2],furthest_loc[2]))
+        # if (minx == maxx and miny == maxy and minz == maxz):
+        #     continue
 
-        region = img[minx:maxx+1, miny:maxy+1, minz:maxz+1]
-        if (region.size < 100):
-            continue
+        # region = img[minx:maxx+1, miny:maxy+1, minz:maxz+1]
+        # if (region.size < 100):
+        #     continue
+
+
+
         # writetiff3d(out_path+str(no_iteration)+'_test.tif',region)
         # region *= 20
         # region[np.where(region > 255)] = 255
@@ -302,16 +311,19 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed_w, seed_h, seed_d, ma
         # print(minx,maxx,miny,maxy,minz,maxz)
         # writetiff3d(out_path+str(no_iteration)+'_test.tif',filtered_region)
 
-        dtt = dt_result[minx:maxx+1, miny:maxy+1, minz:maxz+1]
-        print('dtt shape',dtt.shape)
-        print('maxt dt in crop: ',np.max(dtt),np.argwhere(dtt==np.max(dtt)))
-        max_dt = np.argwhere(dtt==np.max(dtt))
-        max_dt = max_dt[0]
+        # dtt = dt_result[minx:maxx+1, miny:maxy+1, minz:maxz+1]
+        # print('dtt shape',dtt.shape)
+        # print('maxt dt in crop: ',np.max(dtt),np.argwhere(dtt==np.max(dtt)))
+        # max_dt = np.argwhere(dtt==np.max(dtt))
+        # max_dt = max_dt[0]
 
 
 
-        
-        trail_set = np.asarray([[0,minx+max_dt[0],miny+max_dt[1],minz+max_dt[2]]])
+        #UPDATE 
+        trail_set = np.asarray([[0,sort_timemap[0][0],sort_timemap[0][1],sort_timemap[0][2]]])
+
+
+        # trail_set = np.asarray([[0,minx+max_dt[0],miny+max_dt[1],minz+max_dt[2]]])
         # trail_set = np.asarray([[0,sort_timemap[0][0],sort_timemap[0][1],sort_timemap[0][2]]])
         new_alive = np.asarray([[]])
 
@@ -468,7 +480,7 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed_w, seed_h, seed_d, ma
         hp_result[:,6] += padding_index
         hp_result[:,5] = 1
         result = np.vstack((result,hp_result))
-        far = np.argwhere(tbimg == 1)
+        sort_timemap = np.delete(sort_timemap,0)
         
 
     # swc_x = new_alive[:, 2].copy()
