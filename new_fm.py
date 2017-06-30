@@ -72,8 +72,8 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed_w, seed_h, seed_d, ma
     # rsp,_,_ = response(img.astype('float'), np.arange(1,1.5,0.2))
     # rsp *= (255/np.max(rsp))
     # rsp = np.ceil(rsp).astype(img.dtype)
-    rsp = loadimg('test/Frog/rsp_1.tif')
-    brsp = (rsp > threshold).astype('int')
+    # rsp = loadimg('test/Frog/rsp_1.tif')
+    # brsp = (rsp > threshold).astype('int')
 
     # starttime = time.time()
     for i in range(size[0]):
