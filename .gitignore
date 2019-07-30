@@ -2,6 +2,8 @@ test/*
 timemap/*.tif
 filter_test/*.tif
 accuracy/*.tif
+experiment/*
+test_img/*
 *.tif
 *.swc
 *.pyc

@@ -11,7 +11,7 @@ import skfmm
 np.set_printoptions(threshold=np.inf)
 
 def main():
-	parser = argparse.ArgumentParser(description='Arguments for app2_py.')
+	parser = argparse.ArgumentParser(description='Arguments for Exhuastive Tracing.')
 	parser.add_argument('--file', type=str, default=None, required=True, help='The path of input file')
 	parser.add_argument('--out', type=str, default=None, required=True, help='The out path of output swc')
 	parser.add_argument('--threshold', type=float, default=0, help='threshold to distinguish the foreground and background; works on filtered image if --filter is enabled')
@@ -31,8 +31,8 @@ def main():
 	parser.add_argument('--no-dt', dest='trace', action='store_false', help='Skip dt')
 	parser.set_defaults(dt=True)
 
-	# reinforcement iteraion
-	parser.add_argument('--iter', type=int, default=0, help='Reinforcement iteration')
+	# enhanced iteration number
+	parser.add_argument('--iter', type=int, default=0, help='Enhanced iteration number')
 	# MISC
 	parser.add_argument('--silence', dest='silence', action='store_true')
 	parser.add_argument('--no-silence', dest='silence', action='store_false')
@@ -45,27 +45,26 @@ def main():
 	img = loadimg(args.file)
 
 	print('--crop image')
-	# img = crop(img,args.threshold)[0]
+	img = crop(img,args.threshold)[0]
 	print('--save crop image')
-	# writetiff3d(args.out+'crop.tif',img)
+	writetiff3d(args.out+'crop.tif',img)
 	size = img.shape
 	print('--input image size: ', size)
 
     # Distance Transform
 	if args.trace:
 		print('--DT to find soma location')
+		print('--Started: %.2f sec.' % (time.time() - starttime))
 		bimg = (img > args.threshold).astype('int')
-		# print('--Finished: %.2f sec.' % (time.time() - starttime))
 		dt_result = skfmm.distance(bimg, dx=5e-2)
-		# print('--Finished: %.2f sec.' % (time.time() - starttime))
 
 		# find seed location (maximum intensity node)
 		max_dt = np.max(dt_result)
 		seed_location = np.argwhere(dt_result==np.max(dt_result))[0]
 		max_intensity = img[seed_location[0]][seed_location[1]][seed_location[2]]
 		print('--seed index',max_dt,max_intensity,seed_location[0],seed_location[1],seed_location[2])
+		print('--Finished: %.2f sec.' % (time.time() - starttime))
 
-		# dt_result = skfmm.distance(np.logical_not(dt_result), dx=5e-3)
 		timemap = []
 		if args.iter != 0:
 			dt_result[dt_result > 0.04] = 0.04

@@ -55,7 +55,7 @@
 
 # python3 main.py --file test/mouse/1922.tif --threshold 6 --out test/mouse/result.swc
 
-python3 main.py --iter 1 --file test/Frog/1/1.tif --threshold 22 --out test/Frog/1/testnew.swc
+# python3 main.py --iter 1 --file test/Frog/1/1.tif --threshold 22 --out test/Frog/1/testnew.swc
 
 
 # python3 main.py --iter 10000 --file test/Frog/1.tif --threshold 22 --out test/Frog/1/iter_15000.swc
@@ -139,7 +139,7 @@ python3 main.py --iter 1 --file test/Frog/1/1.tif --threshold 22 --out test/Frog
 
 # python3 main.py --no-rein --file test/Janelia_fly/1.tif --threshold 60 --out test/Janelia_fly/pre/1_60.tif
 
-# python3 main.py --no-rein --file test/2000-14/crop.tif --threshold 0 --out test/2000-14/pre/3_0.tif
+python3 main.py --no-rein --file test/2000-14/crop.tif --threshold 0 --out test/2000-14/pre/3_0.tif
 
 # python3 main.py --no-rein --file test/2000-14/crop.tif --threshold 5 --out test/2000-14/pre/3_5.tif
 
