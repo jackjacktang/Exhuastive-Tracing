@@ -52,10 +52,10 @@ def GI(w,h,d, img, max_intensity, min_intensity):
     return givals[index]
 
 """
-initial tree reconsturction using fast-marching
+Exhaustive Tracing
 
 """
-def fastmarching(img, bimg, dt_result, timemap, size, seed, max_intensity,threshold,out_path,r_iter,coverage_ratio):
+def exhaustive_tracing(img, bimg, dt_result, timemap, size, seed, max_intensity,threshold,out_path,r_iter,coverage_ratio):
     # state 0 for FAR, state 1 for TRAIL, state 2 for ALIVE
     state = np.zeros((size[0], size[1], size[2]))
     result = []
@@ -67,17 +67,8 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed, max_intensity,thresh
     prev = np.empty((size[0], size[1], size[2]), dtype=np.int32)
     swc_index = np.empty((size[0], size[1], size[2]), dtype=np.int32)
 
-    # rsp,_,_ = response(img.astype('float'), np.arange(1,1.5,0.2))
-    # rsp *= (255/np.max(rsp))
-    # rsp = np.ceil(rsp).astype(img.dtype)
-    # rsp = loadimg('test/Frog/rsp_1.tif')
-    # brsp = (rsp > threshold).astype('int')
-
-    # starttime = time.time()
     for i in range(size[0]):
         phi[i,:,:] = np.inf
-    # print('--Cost2: %.2f sec.' % (time.time() - starttime))                
-    # print('finish assigning values')
 
     current_index = 0
     # put seed into ALIVE set
@@ -86,11 +77,11 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed, max_intensity,thresh
     swc_index[seed[0],seed[1],seed[2]] = 1
     prev[seed[0],seed[1],seed[2]] = 1
 
-    # [phi,w,h,d,par_id]
-    trail_set = np.asarray([[0,seed]])
-    # [id,radius,w,h,d,1,par_id]
+    # trail set structure[phi,w,h,d,par_id]
+    trail_set = np.asarray([[0,seed[0],seed[1],seed[2]]],dtype=np.float32)
 
-    alive_set = np.asarray([[]])
+    # alive set structure: [id,radius,w,h,d,1,par_id]
+    alive_set = None
     starttime = time.time()
     totaltime = 0
     counter = 0
@@ -99,45 +90,33 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed, max_intensity,thresh
         min_ind = trail_set[0,:]
 
         trail_set = np.delete(trail_set, (0), axis=0)
-        i,j,k = min_ind[1]
+        i,j,k = min_ind[1:4]
+        i = int(i)
+        j = int(j)
+        k = int(k)
         prev_ind = prev[i,j,k]
         parent[i,j,k] = prev_ind
 
         state[i][j][k] = 2
         swc_index[i][j][k] = current_index
-        if(alive_set.shape[1] == 0):
-            alive_set = np.asarray([[current_index,3,i,j,k,1,0]])
+        # print(alive_set.shape)
+        if alive_set is None:
+            alive_set = np.asarray([[current_index,3,i,j,k,1,0]],dtype=np.int32)
         else:
             alive_set = np.vstack((alive_set,[current_index,3,i,j,k,1,prev_ind]))
+        # print('alive:',alive_set)
 
         tbimg[i][j][k] = 2
         current_index += 1
-        # print('insert takes %.10f sec.' % (time.time()-insert_swc))
 
-        # for kk in range(-1, 2):
-        #     d = k + kk
-        #     if (d < 0 or d >= size[2]):
-        #         continue
-        #     for jj in range(-1, 2):
-        #         h = j + jj
-        #         if (h < 0 or h >= size[1]):
-        #             continue
-        #         for ii in range(-1, 2):
-        #             w = i + ii
-        #             if (w < 0 or w >= size[0]):
-        #                 continue
+        neighbor_ind = get_neighbor_ind(img.shape,i-1,i+2,j-1,j+2,k-1,k+2)
 
-        #             offset = abs(ii) + abs(jj) + abs(kk)
-                    # print('offset: ',offset)
-        neighbor_ind = get_neighbor_ind(i-1:i+2,j-1:j+2,k-1:k+2)
-        for i in neighbor_ind:
+        for ind in neighbor_ind:
             factor = 1
-            if i[3] == 2:
+            if ind[3] == 2:
                 factor = 1.414214
 
-            w = i[0]
-            h = i[1]
-            d = i[2]
+            w,h,d = ind[0:3]
 
             if (img[w,h,d] <= threshold and
                 img[i,j,k] <= threshold):
@@ -154,13 +133,11 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed, max_intensity,thresh
                 if (state[w,h,d] == 0):
                     phi[w,h,d] = new_dist
                     # insert into trail set
-                    if trail_set.shape[1] == 0:
-                        trail_set = np.vstack((trail_set,[new_dist,w,h,d]))
+                    if trail_set.shape[0] == 0:
+                        trail_set = np.asarray([[new_dist,w,h,d]],dtype=np.float32)
                     else:
-                        sort_time = time.time()
                         trail_set = np.vstack((trail_set,[new_dist,w,h,d]))
                         trail_set = trail_set[np.argsort(trail_set[:,0])]
-                        # print('insert takes: %.2f',time.time()-sort_time)
 
                     prev[w][h][d] = prev_ind
                     state[w][h][d] = 1
@@ -168,12 +145,10 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed, max_intensity,thresh
                 elif (state[w][h][d] == 1):
                     if (phi[w][h][d] > new_dist):
                         phi[w][h][d] = new_dist
-                        # spatial_index = spatial(w,h,d)
                         temp_ind = np.argwhere((trail_set[:,1] == w) & (trail_set[:,2] == h) & (trail_set[:,3] == d))[0]
                         trail_set[temp_ind][0] = new_dist
                         trail_set = trail_set[np.argsort(trail_set[:,0])]
                         sort_time = time.time()
-                        # print('adjust takes: %.2f',time.time()-sort_time)
                         prev[w][h][d] = prev_ind
 
     print('alive size:',alive_set.shape)
@@ -185,17 +160,18 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed, max_intensity,thresh
     saveswc(out_path + 'ini.swc',ini) 
     bb = np.zeros(img.shape) 
     hp_result,bb = hp(img,bimg,size,alive_set,out_path,threshold,bb,1,bimg,coverage_ratio)
-    # print(hp_result[:,5])
     result = hp_result
     print(result.shape)
-    # return
 
     if r_iter == 0:
+        swc_x = result[:, 2].copy()
+        swc_y = result[:, 3].copy()
+        result[:, 2] = swc_y
+        result[:, 3] = swc_x
         saveswc(out_path + str(r_iter) + 'result.swc',result)
-        exit()
+        return
 
-    # reinforce fast marching
-    # nbimg = (img > 2).astype('int')
+    # enhanced iteration
     far = np.argwhere(bimg == 1)
     if far.shape[0] != 0:
         no_iteration = 0
@@ -228,22 +204,12 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed, max_intensity,thresh
         while (trail_set.size != 0):
             min_ind = trail_set[0,:]
 
-            trail_set = numpy.delete(trail_set, (0), axis=0)
-            # print(trail_set.shape)
+            trail_set = np.delete(trail_set, (0), axis=0)
             i = int(min_ind[1])
             j = int(min_ind[2])
             k = int(min_ind[3])
             if state[i][j][k] != 3:
                 print(state[i][j][k])
-
-            # if (state[i][j][k] == 1 or state[i][j][k] == 2):
-            #     break
-
-            # print(state[i-1:i+2,j-1:j+2,k-1:k+2])
-            if 2 in state[i-3:i+3,j-3:j+3,k-3:k+3]:
-                # print('what?!')
-                continue
-
 
             prev_ind = prev[i][j][k]
             parent[i][j][k] = prev_ind
@@ -251,96 +217,62 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed, max_intensity,thresh
             state[i][j][k] = 4
             swc_index[i][j][k] = current_index
 
-            # if(prev_ind == 0):
-            #     prev_ind = -1
-
             if(new_alive.shape[1] == 0):
                 new_alive = np.asarray([[0,3,i,j,k,1,-1]])
                 alive_set = np.vstack((alive_set,[current_index,3,i,j,k,1,-1]))
             else:
                 p_ind = prev_ind-padding_index
-                # if (p_ind == 0):
-                #     p_ind = -1
                 new_alive = np.vstack((new_alive,[current_index-padding_index,3,i,j,k,1,p_ind]))
                 alive_set = np.vstack((alive_set,[current_index,3,i,j,k,1,prev_ind]))
-            # print(current_index,3,i,j,k,1,prev_ind)
             tbimg[i][j][k] = 2
             current_index += 1
-            # print('insert takes %.10f sec.' % (time.time()-insert_swc))
             totaltime+=(time.time()-insert_swc)
 
-            for kk in range(-1, 2):
-                d = k + kk
-                if (d < 0 or d >= size[2]):
+            neighbor_ind = get_neighbor_ind(img.shape,i-1,i+2,j-1,j+2,k-1,k+2)
+
+            for ind in neighbor_ind:
+
+                w,h,d = ind[0:3]
+                factor = 1
+                if offset == 2:
+                    factor = 1.414214
+
+                if (img[w][h][d] <= threshold):
                     continue
-                for jj in range(-1, 2):
-                    h = j + jj
-                    if (h < 0 or h >= size[1]):
-                        continue
-                    for ii in range(-1, 2):
-                        w = i + ii
-                        if (w < 0 or w >= size[0]):
-                            continue
 
-                        # print(w,h,d)
+                if (state[w][h][d] == 1 or state[w][h][d] == 2):
+                    break
 
-                        offset = abs(ii) + abs(jj) + abs(kk)
-                    # print('offset: ',offset)
-                    # this 2 is cnn type
-                        # print('stop 1')
-                        if offset == 0 or offset > 2:
-                            continue
+                if (state[w][h][d] != 4):
+                # min_intensity set as 0
+                    new_dist = phi[w][h][d] + (GI(
+                        w,h,d, img, max_intensity, 0.0) + GI(
+                            i,j,k, img, max_intensity, 0.0)
+                                           ) * factor * 0.5
+                    prev_ind = swc_index[i][j][k]
 
-                        factor = 1
-                        if offset == 2:
-                            factor = 1.414214
+                    if (state[w][h][d] == 0):
+                        phi[w][h][d] = new_dist
+                        # insert into trail set
+                        if trail_set.shape[1] == 0:
+                            trail_set = np.vstack((trail_set,[new_dist,w,h,d]))
+                        else:
+                            sort_time = time.time()
+                            trail_set = np.vstack((trail_set,[new_dist,w,h,d]))
+                            trail_set = trail_set[np.argsort(trail_set[:,0])]
 
-                        # if (rsp[w][h][d] <= threshold):
-                        #     continue
-                        if (img[w][h][d] <= threshold):
-                            continue
+                        prev[w][h][d] = prev_ind
+                        # 3 for reinforce trail
+                        state[w][h][d] = 3
 
-                    # spatial_index = spatial(w, h, d)
-                        if (state[w][h][d] == 1 or state[w][h][d] == 2):
-                            break
-
-                        if (state[w][h][d] != 4):
-                        # min_intensity set as 0
-                            new_dist = phi[w][h][d] + (GI(
-                                w,h,d, img, max_intensity, 0.0) + GI(
-                                    i,j,k, img, max_intensity, 0.0)
-                                                   ) * factor * 0.5
-                            prev_ind = swc_index[i][j][k]
-
-                            if (state[w][h][d] == 0):
-                                phi[w][h][d] = new_dist
-                            # insert into trail set
-                                if trail_set.shape[1] == 0:
-                                    trail_set = np.vstack((trail_set,[new_dist,w,h,d]))
-                                else:
-                                    sort_time = time.time()
-                                    trail_set = np.vstack((trail_set,[new_dist,w,h,d]))
-                                    trail_set = trail_set[np.argsort(trail_set[:,0])]
-                                # print('insert takes: %.2f',time.time()-sort_time)
-
-                                prev[w][h][d] = prev_ind
-                                # 3 for reinforce trail
-                                # if state[i][j][k] != 2:
-                                #     print(state[i][j][k])
-                                #     break
-                                state[w][h][d] = 3
-
-                            elif (state[w][h][d] == 3):
-                                if (phi[w][h][d] > new_dist):
-                                    phi[w][h][d] = new_dist
-                                # spatial_index = spatial(w,h,d)
-                                    temp_ind = np.argwhere((trail_set[:,1] == w) & (trail_set[:,2] == h) & (trail_set[:,3] == d))[0]
-                                    trail_set[temp_ind][0] = new_dist
-                                    trail_set = trail_set[np.argsort(trail_set[:,0])]
-                                    sort_time = time.time()
-                                # print('adjust takes: %.2f',time.time()-sort_time)
-                                    prev[w][h][d] = prev_ind   
-        # print(new_alive)
+                    elif (state[w][h][d] == 3):
+                        if (phi[w][h][d] > new_dist):
+                            phi[w][h][d] = new_dist
+                            temp_ind = np.argwhere((trail_set[:,1] == w) & (trail_set[:,2] == h) & (trail_set[:,3] == d))[0]
+                            trail_set[temp_ind][0] = new_dist
+                            trail_set = trail_set[np.argsort(trail_set[:,0])]
+                            sort_time = time.time()
+                            prev[w][h][d] = prev_ind   
         if(new_alive.size == 0):
             continue
         print('new_alive shape',new_alive.shape)
@@ -350,50 +282,21 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed, max_intensity,thresh
         new[:, 2] = swc_y
         new[:, 3] = swc_x
 
-        # saveswc(out_path + str(no_iteration) + '_ini.swc',new)
-
-        # p_ind = np.argwhere(new_alive[:,6] == 0)
-        # p_ind = p_ind[0][0]
-        # new_alive[p_ind][6] = -1
-        # print('p_ind',p_ind.shape)
-
-        print('before prune',new_alive.shape)
         hp_result,bb = hp(img,bimg,size,new_alive,out_path,threshold,bb,2,brsp,coverage_ratio)
-        if hp_result is None:
-            print('after prune: Nothing')
-        else:
-            print('after prune',hp_result.shape)
-        # print(hp_result)
-        print('no of iteration: ',no_iteration)
+
+        print('no of enhanced iteration: ',no_iteration)
         if(hp_result is None or hp_result.shape[1] == 0):
             continue
 
-        # if(hp_result.shape[0] <= 50):
-        #     continue
-
         print('padding index', padding_index)
-        # print('after prune',hp_result.shape)
-        # print(hp_result)
         hp_result[:,0] += padding_index
         hp_result[:,6] += padding_index
         hp_result[:,5] = 1
         result = np.vstack((result,hp_result))
         sort_timemap = np.delete(sort_timemap,0)
         
-
-    # swc_x = new_alive[:, 2].copy()
-    # swc_y = new_alive[:, 3].copy()
-    # new_alive[:, 2] = swc_y
-    # new_alive[:, 3] = swc_x
-    # saveswc(out_path+'reinforce_ini.swc',new_alive)
-
-    # writetiff3d(out_path+'test_original.tif',img)
-    print('alive size:',alive_set.shape)
-
-    print(totaltime)
-    print(counter)
-    print('--FM finished')
-    print('--Fast Marching: %.2f sec.' % (time.time() - starttime))
+    print('--Enhanced tracing finished')
+    print('--Enhanced iteration: %.2f sec.' % (time.time() - starttime))
     r = alive_set
 
     swc_x = alive_set[:, 2].copy()
@@ -405,13 +308,8 @@ def fastmarching(img, bimg, dt_result, timemap, size, seed, max_intensity,thresh
     swc_y = result[:, 3].copy()
     result[:, 2] = swc_y
     result[:, 3] = swc_x
-    # print(type(alive_set))
-    # print(alive_set[27])
     saveswc(out_path + '_ini.swc',alive_set)
     saveswc(out_path + '_result.swc',result)
-    # print('--Start: %.2f sec.' % (starttime))
-    print('--Store ini_swc: %.2f sec.' % (time.time() - starttime))
-    # print('--FM finished')
 
     return r
 
@@ -422,22 +320,22 @@ def get_neighbor_ind(size,i_min,i_max,j_min,j_max,k_min,k_max):
     k = k_min + 1
     if i-1 < 0:
         i_min = i
-    if i+1 >= size[0]
+    if i+1 >= size[0]:
         i_max = i+1
     if j-1 < 0:
         j_min = j
-    if j+1 >= size[1]
+    if j+1 >= size[1]:
         j_max = j+1
     if k-1 < 0:
         k_min = k
-    if k+1 >= size[2]
+    if k+1 >= size[2]:
         k_max = k+1
 
     for kk in range(k_min,k_max):
         for jj in range(j_min,j_max):
             for ii in range(i_min,i_max):
                 offset = abs(k-kk) + abs(j-jj) + abs(i-ii)
-                if offset <= 2:
+                if offset <= 2 and offset != 0:
                     result.append([ii,jj,kk,offset])
 
     return np.asarray(result)

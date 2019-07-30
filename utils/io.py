@@ -62,6 +62,9 @@ def loadswc(filepath):
 
 
 def saveswc(filepath, swc):
+    if swc.shape[1] > 7:
+        swc = swc[:, :7]
+
     with open(filepath, 'w') as f:
         for i in range(swc.shape[0]):
             print('%d %d %.3f %.3f %.3f %.3f %d' % tuple(swc[i, :].tolist()), file=f)

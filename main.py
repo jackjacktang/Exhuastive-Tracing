@@ -4,11 +4,11 @@ import time
 import numpy as np
 import scipy.misc
 from utils.io import *
-from new_fm import *
+from exhaustive_tracing import *
 from new_hp import *
 # from hierarchy_prune import *
 import skfmm
-np.set_printoptions(threshold=np.inf)
+# np.set_printoptions(threshold=np.inf)
 
 def main():
 	parser = argparse.ArgumentParser(description='Arguments for Exhuastive Tracing.')
@@ -57,6 +57,8 @@ def main():
 		print('--Started: %.2f sec.' % (time.time() - starttime))
 		bimg = (img > args.threshold).astype('int')
 		dt_result = skfmm.distance(bimg, dx=5e-2)
+		# dt_result = img.astype(float)
+		# dt_result /= np.max(dt_result)
 
 		# find seed location (maximum intensity node)
 		max_dt = np.max(dt_result)
@@ -65,31 +67,23 @@ def main():
 		print('--seed index',max_dt,max_intensity,seed_location[0],seed_location[1],seed_location[2])
 		print('--Finished: %.2f sec.' % (time.time() - starttime))
 
-		timemap = []
-		if args.iter != 0:
-			dt_result[dt_result > 0.04] = 0.04
+		# skfmm has negative discriminant in time marcher quadratic
+		timemap = dt_result
+		# if args.iter != 0:
+			# dt_result[dt_result > 0.04] = 0.04
 			# dt_result = max_dt-dt_result
-			speed = makespeed(dt_result)
-			marchmap = np.ones(bimg.shape)
-			marchmap[seed_location[0]][seed_location[1]][seed_location[2]] = -1
-			timemap = skfmm.travel_time(marchmap, speed, dx=5e-3)
-			# print('timemap shape',timemap.shape)
-			imgxy2d = timemap.min(axis=-1)
-
+			# speed = makespeed(dt_result)
+			# marchmap = np.ones(bimg.shape)
+			# marchmap[seed_location[0]][seed_location[1]][seed_location[2]] = -1
+			# timemap = skfmm.travel_time(marchmap, speed, dx=5e-3)
+			# imgxy2d = timemap.min(axis=-1)
 			# scipy.misc.imsave('imgxy2d_projection.tif', imgxy2d)
 
 		print('--SKFMM: %.2f sec.' % (time.time() - starttime))
 		print('--initial reconstruction by Fast Marching')
-		alive = fastmarching(img,bimg,dt_result,timemap,size,seed_location[0],seed_location[1],seed_location[2],max_intensity,args.threshold,args.out,args.iter,args.coverage_ratio)
-		print('--initial reconstruction finished')
-		print('--FM Total: %.2f sec.' % (time.time() - starttime))
-
-		# starttime2 = time.time()
-		# print('--perform hierarchical pruning')
-		# hp(img,bimg,size,alive,args.out,args.threshold)
-		# print('--APP2 finished')
-		# print('--Pruning: %.2f sec.' % (time.time() - starttime2))
-		# print('--Finished: %.2f sec.' % (time.time() - starttime))
+		exhaustive_tracing(img,bimg,dt_result,timemap,size,seed_location,max_intensity,args.threshold,args.out,args.iter,args.coverage_ratio)
+		print('--Exhuastive tracing finished')
+		print('--Total: %.2f sec.' % (time.time() - starttime))
 
 		
 

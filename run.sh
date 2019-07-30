@@ -139,7 +139,7 @@
 
 # python3 main.py --no-rein --file test/Janelia_fly/1.tif --threshold 60 --out test/Janelia_fly/pre/1_60.tif
 
-python3 main.py --no-rein --file test/2000-14/crop.tif --threshold 0 --out test/2000-14/pre/3_0.tif
+python3 main.py --file test_img/2000-8/2000-8.tif --threshold 0 --out test_img/2000-8/2000-8.tif --iter 5
 
 # python3 main.py --no-rein --file test/2000-14/crop.tif --threshold 5 --out test/2000-14/pre/3_5.tif
 

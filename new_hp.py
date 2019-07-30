@@ -43,7 +43,6 @@ build segments based on the swc from the initial reconstruction
 """
 def swc2topo_segs(img,size,alive,out,threshold,phase):
     tol_num = alive.shape[0]
-    # print('27',alive[27])
 
     leaf_nodes = np.array([])
     child_no = np.zeros(tol_num, dtype=int)
@@ -52,29 +51,23 @@ def swc2topo_segs(img,size,alive,out,threshold,phase):
         child_no[int(alive[int(i)][6])] += 1
         
 
-    # calculate distance for every tree nodes
     child_index = np.where(child_no == 0)
     leaf_nodes = alive[child_index]
 
 
     topo_dists = np.zeros(tol_num)
     topo_leafs = np.empty(tol_num)
-    # print(parent_node)
-    # print(int(child_node[0]))
-    # # print(img[child_node[2]][child_node[3]][child_node[4]])
-    # print(img[116][210][7])
+
 
     for leaf in leaf_nodes:
         child_node = leaf
         parent_node = alive[int(child_node[6])]
         cid = int(child_node[0])
         topo_leafs[cid] = leaf[0]
-        # print(img[2][3][4]/255.0)
         topo_dists[cid] = img[leaf[2]][leaf[3]][leaf[4]]/255.0
         while parent_node[0] != 0:
             pid = int(parent_node[0])
             tmp_dst = img[int(parent_node[2])][int(parent_node[3])][int(parent_node[4])]/255.0 + topo_dists[cid]
-            # print(tmp_dst)
 
             if (tmp_dst >= topo_dists[pid]):
                 topo_dists[pid] = tmp_dst
@@ -85,19 +78,8 @@ def swc2topo_segs(img,size,alive,out,threshold,phase):
             cid = pid
             parent_node = alive[int(parent_node[6])]
 
-
-    # print(topo_dists[11])
     fp = np.argmax(topo_dists)
-    print(fp)
     fn = topo_leafs[fp]
-    print(fn)
-    print(topo_dists[fp])
-    # print('furthest point location: ', alive[int(fn)][2], alive[int(fn)][3], alive[int(fn)][4], 'index: ',fp,'length: ',
-    #       topo_dists[fp])
-    # print('seed topo to this point: ', alive[int(topo_leafs[0])][2], alive[int(topo_leafs[0])][3],
-    #       alive[int(topo_leafs[0])][4], topo_dists[0])
-    # # topo_segs (leaf,root,parent,dst,level)
-    # print(np.argwhere(topo_dists==0).shape)
     topo_segs = np.array([[]])
 
     
@@ -106,10 +88,6 @@ def swc2topo_segs(img,size,alive,out,threshold,phase):
         root_marker = leaf
         root_parent = alive[int(root_marker[6])]
         level = 1
-
-        # print('root id',root_parent[0])
-        # print('topo tp',topo_leafs[root_parent[0]])
-        # print('leaf id',leaf[0])
 
         while (root_parent[0] != 0 and topo_leafs[int(root_parent[0])] == leaf[0]):
             if child_no[int(root_marker[0])] >= 2:
@@ -125,10 +103,7 @@ def swc2topo_segs(img,size,alive,out,threshold,phase):
             topo_segs = np.asarray([[leaf[0],root_marker[0],parent_index,dst,level]])
         else:
             topo_segs = np.vstack((topo_segs,[leaf[0],root_marker[0],parent_index,dst,level]))
-        # print(topo_segs.shape)
 
-    # print(topo_segs)
-    # print(topo_segs[:,3])
     if phase == 1:
         filter_segs = topo_segs[np.argwhere(topo_segs[:,3] > 2)]
         filter_segs = np.squeeze(filter_segs, axis=(1,))
@@ -136,30 +111,6 @@ def swc2topo_segs(img,size,alive,out,threshold,phase):
         filter_segs = topo_segs
     # print(filter_segs)
     print('filter_segs',filter_segs.shape)
-
-    '''
-    store filter segments
-    '''
-    # out_swc = np.array([[]])
-
-    # for i in filter_segs:
-    #     current = int(i[0])
-    #     while(current != i[1]):
-    #         if out_swc.size == 0:
-    #             out_swc = np.array(alive[current])
-    #         else:
-    #             out_swc = np.vstack((out_swc,alive[current]))       
-    #         current = alive[current][6]
-
-    # swc_x = out_swc[:, 2].copy()
-    # swc_y = out_swc[:, 3].copy()
-    # out_swc[:, 2] = swc_y
-    # out_swc[:, 3] = swc_x
-    # saveswc(out + 'new_filter_segments.swc',out_swc)
-
-
-
-
     return filter_segs
 
 """
@@ -170,18 +121,7 @@ def hierchical_coverage_prune(alive,filter_segs,img,out,bb,phase,coverage_ratio)
     bb = np.zeros(img.shape)
     sort_segs = filter_segs[np.argsort(filter_segs[:,3])]
     sort_segs = sort_segs[::-1]
-    print(sort_segs[0:20,3])
-    print('sort_seg',sort_segs[0][3],sort_segs[-1][3])
     result_segs = np.array([[]])
-    # if phase == 2:
-    #     coverage_ratio = 7/10
-        # return sort_segs[0:10],bb
-
-    # if phase == 2:
-    #     result = longest_segment(alive,sort_segs[0])
-    #     return result,bb
-
-    # bb = np.zeros(img.shape)
 
     index = 0
     # store filter_segs [leaf_index,root_index,parent_index,length,level]
@@ -213,12 +153,7 @@ def hierchical_coverage_prune(alive,filter_segs,img,out,bb,phase,coverage_ratio)
             continue
         coverage = overlap / tol_num
 
-
-        # if coverage smaller than threshold
-        # print(coverage)
-        # print(coverage)
         if (coverage < coverage_ratio):
-            print(coverage)
             current = int(seg[0])
             while (1):
                 if result_segs.size == 0:
@@ -229,17 +164,6 @@ def hierchical_coverage_prune(alive,filter_segs,img,out,bb,phase,coverage_ratio)
                     break
                 else:
                     current = alive[current][6]
-
-        # delete this segment and all children
-        # else:
-            # if children_index.size != 0:
-            #     for child in children_index:
-            #         next_index = np.argwhere(sort_segs)
-                # if exists a child, delete child and find next child
-
-
-
-
 
             current = int(seg[0])
             root = int(seg[1])
@@ -254,39 +178,8 @@ def hierchical_coverage_prune(alive,filter_segs,img,out,bb,phase,coverage_ratio)
                 bb[x, y, z] = 1
                 current = int(alive[current][6])
 
-        # index+=1
-
-    # delete leaf segments which the parent have already been deleted
-    # parent_index = result_segs[:, 6]
-    # delete_index = []
-    # index = 0
-    # for p in parent_index:
-    #     if p not in result_segs[:, 0]:
-    #         delete_index.append(index)
-    #     index+=1
-    # print(result_segs.shape)
-    # result_segs = np.delete(result_segs,delete_index,axis=0)
-    # print(result_segs.shape)
-
-
-
-    
-    # swc_x = result_segs[:, 2].copy()
-    # swc_y = result_segs[:, 3].copy()
-    # result_segs[:, 2] = swc_y
-    # result_segs[:, 3] = swc_x
-    # saveswc(out,result_segs)
     return result_segs,bb
-
-
-    # print(len(filtered_result_segs))
-    # filtered_result_segs = []
-
-    # TODO: Not sure if it works!
-    # # Delete the added segments whose parents were deleted
-    # for seg in result_segs:
-    #     if seg.parent not in delete_segs:
-    #         filtered_result_segs.append(seg)       
+   
 
 """
 make sure the mask area is in the bound of the image
