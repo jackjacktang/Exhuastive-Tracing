@@ -1,3 +1,14 @@
-# app2_py
-# python version for app2 is also included in this package implementation
-python3 --iter n main.py --file path/to/file --threshold x --out path/to/file
+# Exhaustive tracing
+
+```bash
+usage: rtrace -f FILE -o OUT [--threshold] [--coverage_ratio]
+              [--allow_gap] [--trace] [--dt] [--iter]
+
+Arguments to perform the Rivulet2 tracing algorithm.
+
+optional arguments:
+  --file                The input file. A image file (*.tif, *.nii, *.mat).
+  --out                 The name of the output file
+  --threshold           threshold to distinguish the foreground and
+                        background. Default 0.
+```
