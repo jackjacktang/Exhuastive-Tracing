@@ -226,7 +226,7 @@ def exhaustive_tracing(img, bimg, dt_result, timemap, size, seed, max_intensity,
                 alive_set = np.vstack((alive_set,[current_index,3,i,j,k,1,prev_ind]))
             tbimg[i][j][k] = 2
             current_index += 1
-            totaltime+=(time.time()-insert_swc)
+            totaltime+=(time.time()-starttime)
 
             neighbor_ind = get_neighbor_ind(img.shape,i-1,i+2,j-1,j+2,k-1,k+2)
 
@@ -234,7 +234,7 @@ def exhaustive_tracing(img, bimg, dt_result, timemap, size, seed, max_intensity,
 
                 w,h,d = ind[0:3]
                 factor = 1
-                if offset == 2:
+                if ind[3] == 2:
                     factor = 1.414214
 
                 if (img[w][h][d] <= threshold):
@@ -274,26 +274,29 @@ def exhaustive_tracing(img, bimg, dt_result, timemap, size, seed, max_intensity,
                             sort_time = time.time()
                             prev[w][h][d] = prev_ind   
         if(new_alive.size == 0):
+            no_iteration += 1
             continue
-        print('new_alive shape',new_alive.shape)
+        # print('new_alive shape',new_alive.shape)
         new = new_alive.copy()
         swc_x = new[:, 2].copy()
         swc_y = new[:, 3].copy()
         new[:, 2] = swc_y
         new[:, 3] = swc_x
 
-        hp_result,bb = hp(img,bimg,size,new_alive,out_path,threshold,bb,2,brsp,coverage_ratio)
+        hp_result,bb = hp(img,bimg,size,new_alive,out_path,threshold,bb,2,bimg,coverage_ratio)
 
-        print('no of enhanced iteration: ',no_iteration)
+        # print('no of enhanced iteration: ',no_iteration)
         if(hp_result is None or hp_result.shape[1] == 0):
+            no_iteration += 1
             continue
 
-        print('padding index', padding_index)
+        # print('padding index', padding_index)
         hp_result[:,0] += padding_index
         hp_result[:,6] += padding_index
         hp_result[:,5] = 1
         result = np.vstack((result,hp_result))
         sort_timemap = np.delete(sort_timemap,0)
+        no_iteration += 1
         
     print('--Enhanced tracing finished')
     print('--Enhanced iteration: %.2f sec.' % (time.time() - starttime))

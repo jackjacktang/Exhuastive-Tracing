@@ -23,8 +23,8 @@ def main():
 	parser.add_argument('--no-allow_gap', dest='allow_gap', action='store_false', help='allow no gap during tracing')
 	parser.set_defaults(allow_gap=True)
 
-	parser.add_argument('--trace', dest='trace', action='store_true', help='Run tracing with APP2')
-	parser.add_argument('--no-trace', dest='trace', action='store_false', help='Skip the tracing with APP2')
+	parser.add_argument('--trace', dest='trace', action='store_true', help='Run Exhaustive Tracing')
+	parser.add_argument('--no-trace', dest='trace', action='store_false', help='Skip Exhaustive Tracing')
 	parser.set_defaults(trace=True)
 
 	parser.add_argument('--dt', dest='trace', action='store_true', help='Perform dt when fast marching')
@@ -34,9 +34,6 @@ def main():
 	# enhanced iteration number
 	parser.add_argument('--iter', type=int, default=0, help='Enhanced iteration number')
 	# MISC
-	parser.add_argument('--silence', dest='silence', action='store_true')
-	parser.add_argument('--no-silence', dest='silence', action='store_false')
-	parser.set_defaults(silence=False)
 
 	args = parser.parse_args()
 
@@ -68,15 +65,13 @@ def main():
 		print('--Finished: %.2f sec.' % (time.time() - starttime))
 
 		# skfmm has negative discriminant in time marcher quadratic
-		timemap = dt_result
-		# if args.iter != 0:
-			# dt_result[dt_result > 0.04] = 0.04
-			# dt_result = max_dt-dt_result
-			# speed = makespeed(dt_result)
-			# marchmap = np.ones(bimg.shape)
-			# marchmap[seed_location[0]][seed_location[1]][seed_location[2]] = -1
-			# timemap = skfmm.travel_time(marchmap, speed, dx=5e-3)
-			# imgxy2d = timemap.min(axis=-1)
+		# timemap = dt_result
+		if args.iter != 0:
+			speed = makespeed(dt_result)
+			marchmap = np.ones(bimg.shape)
+			marchmap[seed_location[0]][seed_location[1]][seed_location[2]] = -1
+			timemap = skfmm.travel_time(marchmap, speed, dx=5e-3)
+			imgxy2d = timemap.min(axis=-1)
 			# scipy.misc.imsave('imgxy2d_projection.tif', imgxy2d)
 
 		print('--SKFMM: %.2f sec.' % (time.time() - starttime))

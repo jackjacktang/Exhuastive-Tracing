@@ -110,7 +110,7 @@ def swc2topo_segs(img,size,alive,out,threshold,phase):
     else:
         filter_segs = topo_segs
     # print(filter_segs)
-    print('filter_segs',filter_segs.shape)
+    # print('filter_segs',filter_segs.shape)
     return filter_segs
 
 """
